@@ -26,6 +26,9 @@ The application provides a graphical user interface to fill out daily activities
   - Automatic detection of LaTeX distributions (MiKTeX and TeX Live) from system PATH, registry, and standard Windows directories.
   - Custom compiler path configuration with file browser and live verification testing.
   - Direct download guidance when a compiler is missing.
+- **Custom Workspace Directory & Migration**:
+  - Configurable reports output directory allowing users to store logbooks anywhere on their computer.
+  - Automatic transfer and merge prompt to safely migrate existing weekly logbooks when changing the directory.
 - **Flat-File JSON Storage**:
   - Saves report drafts as `report_data.json` inside each week's folder, allowing revisions at any time without database dependencies.
 - **Single Portable Executable**:
@@ -67,8 +70,8 @@ To compile PDF reports, one of the following LaTeX distributions must be install
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/intern-report-app.git
-   cd intern-report-app
+   git clone https://github.com/LurdK/UMT-Intern-Report-App-IRP-.git
+   cd UMT-Intern-Report-App-IRP-
    ```
 
 2. Run the application directly:
@@ -102,13 +105,14 @@ To bundle the application into a single portable binary using PyInstaller:
    Intern Report App/InternReportApp.exe
    ```
 
-
 ---
 
 ## Project Structure
 
 ```
 Intern Report App (IRP)/
+|-- Intern Report App/             # Distribution output folder
+|   `-- InternReportApp.exe        # Standalone portable binary
 |-- Report Format/                 # Master LaTeX template and logo assets
 |   |-- img/
 |   |   `-- UMT Logo.png
@@ -123,7 +127,7 @@ Intern Report App (IRP)/
 |   `-- ...
 |-- backend/                       # Core logic and services
 |   |-- compiler.py                # pdflatex search, execution, and cleanup
-|   |-- folder_manager.py          # Directory lifecycle and asset healing
+|   |-- folder_manager.py          # Directory lifecycle, transfer, and asset healing
 |   |-- latex_engine.py            # Data extraction and LaTeX code generation
 |   `-- storage.py                 # JSON configuration and draft persistence
 |-- ui/                            # Desktop user interface
@@ -137,6 +141,7 @@ Intern Report App (IRP)/
 |-- LICENSE                        # MIT License
 `-- README.md                      # Documentation
 ```
+
 
 ---
 
