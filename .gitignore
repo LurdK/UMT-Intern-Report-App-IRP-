@@ -23,6 +23,8 @@ build/
 dist/
 Intern Report App/
 *.spec
+*.zip
+
 
 # ==========================================
 # User & Runtime Configuration
