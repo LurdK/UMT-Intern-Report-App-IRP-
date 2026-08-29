@@ -25,6 +25,7 @@ from backend.compiler import (
     TEXLIVE_URL
 )
 from ui.settings_dialog import SettingsDialog
+from ui.about_dialog import AboutDialog
 from ui.date_picker import open_date_picker
 
 
@@ -344,38 +345,58 @@ class InternReportApp(tk.Tk):
 
 
         # Bottom Tools Frame
-        bottom_tools = tk.Frame(self.sidebar_frame, bg="#0B1120", padx=10, pady=10)
+        bottom_tools = tk.Frame(self.sidebar_frame, bg="#0B1120", padx=10, pady=8)
         bottom_tools.pack(fill=tk.X, side=tk.BOTTOM)
 
+        row1 = tk.Frame(bottom_tools, bg="#0B1120")
+        row1.pack(fill=tk.X, pady=(0, 4))
+
         btn_settings = tk.Button(
-            bottom_tools,
+            row1,
             text="⚙️ Settings",
             font=("Segoe UI", 8),
             fg="#CBD5E1",
             bg="#1E293B",
             activebackground="#334155",
             relief=tk.FLAT,
-            padx=6,
+            padx=4,
             pady=4,
             cursor="hand2",
             command=self.open_settings_dialog
         )
-        btn_settings.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3))
+        btn_settings.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
 
         btn_refresh = tk.Button(
-            bottom_tools,
+            row1,
             text="🔄 Refresh",
             font=("Segoe UI", 8),
             fg="#CBD5E1",
             bg="#1E293B",
             activebackground="#334155",
             relief=tk.FLAT,
-            padx=6,
+            padx=4,
             pady=4,
             cursor="hand2",
             command=self.refresh_week_list
         )
-        btn_refresh.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(3, 0))
+        btn_refresh.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+
+        btn_about = tk.Button(
+            bottom_tools,
+            text="ℹ️ About",
+            font=("Segoe UI", 8),
+            fg="#94A3B8",
+            bg="#0F172A",
+            activebackground="#1E293B",
+            activeforeground="#E2E8F0",
+            relief=tk.FLAT,
+            padx=4,
+            pady=3,
+            cursor="hand2",
+            command=self.open_about_dialog
+        )
+        btn_about.pack(fill=tk.X)
+
 
     def build_main_workspace(self):
         self.scroll_area = ScrollableFrame(self.main_content_frame)
@@ -1594,6 +1615,10 @@ class InternReportApp(tk.Tk):
             self.set_status("Settings saved. Reports directory updated.")
 
         SettingsDialog(self, self.workspace_dir, self.config, on_save_callback=on_saved)
+
+    def open_about_dialog(self):
+        AboutDialog(self)
+
 
 
     def show_missing_compiler_dialog(self):
