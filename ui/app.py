@@ -1124,7 +1124,12 @@ class InternReportApp(tk.Tk):
 
         # Attendance
         for item in self.att_day_widgets:
-            item["frame"].destroy()
+            f = item.get("frame") or item.get("card")
+            if f:
+                try:
+                    f.destroy()
+                except Exception:
+                    pass
         self.att_day_widgets.clear()
 
         att_list = normalize_attendance_data(data.get("attendance"))
@@ -1137,7 +1142,12 @@ class InternReportApp(tk.Tk):
 
         # Weekly Activities
         for item in self.activity_day_widgets:
-            item["frame"].destroy()
+            f = item.get("frame") or item.get("card")
+            if f:
+                try:
+                    f.destroy()
+                except Exception:
+                    pass
         self.activity_day_widgets.clear()
 
         activities = data.get("daily_activities", [])
@@ -1149,7 +1159,12 @@ class InternReportApp(tk.Tk):
 
         # Skills
         for item in self.skill_bullet_widgets:
-            item["frame"].destroy()
+            f = item.get("frame") or item.get("card")
+            if f:
+                try:
+                    f.destroy()
+                except Exception:
+                    pass
         self.skill_bullet_widgets.clear()
 
         for skill in data.get("skills_gained", []):
@@ -1157,11 +1172,17 @@ class InternReportApp(tk.Tk):
 
         # Comments
         for item in self.comment_bullet_widgets:
-            item["frame"].destroy()
+            f = item.get("frame") or item.get("card")
+            if f:
+                try:
+                    f.destroy()
+                except Exception:
+                    pass
         self.comment_bullet_widgets.clear()
 
         for comment in data.get("problems_comments", []):
             self.add_comment_bullet(text=comment)
+
 
     def extract_form_data(self) -> Dict[str, Any]:
         data = {
@@ -1437,6 +1458,7 @@ class InternReportApp(tk.Tk):
 
         day_dict: Dict[str, Any] = {
             "card": day_card,
+            "frame": day_card,
             "entry_date": entry_date,
             "tasks_box": tasks_box,
             "items": []
@@ -1451,9 +1473,15 @@ class InternReportApp(tk.Tk):
             self.add_activity_item(day_dict, text=text)
 
     def remove_activity_day_block(self, day_dict: Dict[str, Any]):
-        day_dict["card"].destroy()
+        f = day_dict.get("frame") or day_dict.get("card")
+        if f:
+            try:
+                f.destroy()
+            except Exception:
+                pass
         if day_dict in self.activity_day_widgets:
             self.activity_day_widgets.remove(day_dict)
+
 
     def add_activity_item(self, day_dict: Dict[str, Any], text: str = ""):
         row = tk.Frame(day_dict["tasks_box"], bg="#F8FAFC")
