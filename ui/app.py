@@ -249,7 +249,21 @@ class InternReportApp(tk.Tk):
         )
         self.lbl_compiler_badge.pack(side=tk.RIGHT)
 
+        self._status_timer = None
         self.update_compiler_badge()
+
+    def set_status(self, text: str, is_error: bool = False, timeout_ms: int = 4000):
+        if hasattr(self, "lbl_status"):
+            color = COLOR_DANGER if is_error else "#0284C7"
+            self.lbl_status.configure(text=text, fg=color)
+            if hasattr(self, "_status_timer") and self._status_timer:
+                try:
+                    self.after_cancel(self._status_timer)
+                except Exception:
+                    pass
+            if timeout_ms > 0 and not is_error:
+                self._status_timer = self.after(timeout_ms, lambda: self.lbl_status.configure(text="Ready", fg="#475569"))
+
 
     def build_sidebar(self):
         # Header / Branding

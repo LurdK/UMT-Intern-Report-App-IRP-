@@ -312,8 +312,18 @@ class SettingsDialog(tk.Toplevel):
         self.config["auto_clean_aux"] = self.clean_aux_var.get()
 
         save_config(self.base_dir, self.config)
-        self.on_save_callback(self.config)
-        messagebox.showinfo("Settings Saved", f"Configuration has been updated successfully!{transfer_msg}", parent=self)
+        try:
+            self.on_save_callback(self.config)
+        except Exception as e:
+            print(f"Error updating main window on save: {e}")
+
+        parent_win = self.master
         self.destroy()
+        messagebox.showinfo(
+            "Settings Saved",
+            f"Configuration has been updated successfully!{transfer_msg}",
+            parent=parent_win
+        )
+
 
 
