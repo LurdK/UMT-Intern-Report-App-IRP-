@@ -284,5 +284,56 @@ class FolderManager:
             os.startfile(file_path)
         elif sys.platform == "darwin":
             subprocess.Popen(["open", file_path])
-        else:
-            subprocess.Popen(["xdg-open", file_path])
+    @staticmethod
+    def transfer_reports(src_dir: str, dst_dir: str) -> tuple:
+        """
+        Transfers (moves/merges) all report folders from src_dir to dst_dir.
+        Returns: (folders_transferred: int, files_transferred: int)
+        """
+        src_dir = os.path.abspath(src_dir)
+        dst_dir = os.path.abspath(dst_dir)
+        if not os.path.exists(src_dir) or not os.path.isdir(src_dir):
+            return 0, 0
+        if os.path.normpath(src_dir).lower() == os.path.normpath(dst_dir).lower():
+            return 0, 0
+
+        os.makedirs(dst_dir, exist_ok=True)
+        folders_count = 0
+        files_count = 0
+
+        for entry in os.listdir(src_dir):
+            if entry in ("build", "dist", ".git", ".agents", "__pycache__", "Intern Report App") or entry.startswith("."):
+                continue
+            src_entry = os.path.join(src_dir, entry)
+            dst_entry = os.path.join(dst_dir, entry)
+
+            try:
+                if os.path.isdir(src_entry):
+                    if os.path.exists(dst_entry):
+                        # Merge contents into existing directory
+                        for sub_root, _, sub_files in os.walk(src_entry):
+                            rel_sub = os.path.relpath(sub_root, src_entry)
+                            target_sub = os.path.join(dst_entry, rel_sub) if rel_sub != "." else dst_entry
+                            os.makedirs(target_sub, exist_ok=True)
+                            for sf in sub_files:
+                                s_file = os.path.join(sub_root, sf)
+                                d_file = os.path.join(target_sub, sf)
+                                if not os.path.exists(d_file):
+                                    shutil.copy2(s_file, d_file)
+                                    files_count += 1
+                        shutil.rmtree(src_entry, ignore_errors=True)
+                    else:
+                        shutil.move(src_entry, dst_entry)
+                    folders_count += 1
+                elif os.path.isfile(src_entry):
+                    if not os.path.exists(dst_entry):
+                        shutil.move(src_entry, dst_entry)
+                    else:
+                        shutil.copy2(src_entry, dst_entry)
+                        os.remove(src_entry)
+                    files_count += 1
+            except Exception as e:
+                print(f"Error transferring {entry}: {e}")
+
+        return folders_count, files_count
+

@@ -281,6 +281,29 @@ class SettingsDialog(tk.Toplevel):
         self.refresh_compiler_status()
 
     def save(self):
+        old_custom = self.config.get("custom_reports_dir", "").strip()
+        new_custom = self.reports_dir_entry.get().strip()
+
+        old_dir = os.path.abspath(old_custom) if old_custom else os.path.abspath(os.path.join(self.base_dir, "Report"))
+        new_dir = os.path.abspath(new_custom) if new_custom else os.path.abspath(os.path.join(self.base_dir, "Report"))
+
+        transfer_msg = ""
+        if os.path.normpath(old_dir).lower() != os.path.normpath(new_dir).lower() and os.path.exists(old_dir):
+            existing_items = [e for e in os.listdir(old_dir) if not e.startswith(".") and e not in ("build", "dist", ".git", ".agents", "__pycache__", "Intern Report App")]
+            if existing_items:
+                ans = messagebox.askyesno(
+                    "Transfer Existing Reports?",
+                    f"The reports output directory has been changed.\n\n"
+                    f"From:\n{old_dir}\n\n"
+                    f"To:\n{new_dir}\n\n"
+                    f"Would you like to transfer (move) all your existing weekly reports ({len(existing_items)} item(s)) from the old directory to the new directory?",
+                    parent=self
+                )
+                if ans:
+                    from backend.folder_manager import FolderManager
+                    f_count, fl_count = FolderManager.transfer_reports(old_dir, new_dir)
+                    transfer_msg = f"\n\nTransferred {f_count} folder(s) and {fl_count} file(s) to the new location."
+
         self.config["matric_no"] = self.matric_entry.get().strip() or "S70012"
         self.config["course_code"] = self.course_entry.get().strip() or "CSF4992 / CSF49712 INDUSTRIAL TRAINING"
         self.config["student_name"] = self.name_entry.get().strip()
@@ -290,6 +313,7 @@ class SettingsDialog(tk.Toplevel):
 
         save_config(self.base_dir, self.config)
         self.on_save_callback(self.config)
-        messagebox.showinfo("Settings Saved", "Configuration has been updated successfully!", parent=self)
+        messagebox.showinfo("Settings Saved", f"Configuration has been updated successfully!{transfer_msg}", parent=self)
         self.destroy()
+
 
