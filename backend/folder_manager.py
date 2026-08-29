@@ -127,7 +127,7 @@ class FolderManager:
                 return
             for entry in os.listdir(target_dir):
                 entry_path = os.path.join(target_dir, entry)
-                if os.path.isdir(entry_path) and entry not in ("Report Format", "Report", "build", "dist", ".git", ".agents", "__pycache__") and not entry.startswith("."):
+                if os.path.isdir(entry_path) and entry not in ("Report Format", "Report", "build", "dist", "Intern Report App", ".git", ".agents", "__pycache__") and not entry.startswith("."):
                     match = pattern.search(entry)
                     week_num = int(match.group(1)) if match else 999
                     

@@ -94,13 +94,14 @@ To bundle the application into a single portable binary using PyInstaller:
    ```
    Or run the PyInstaller command manually:
    ```bash
-   pyinstaller --noconfirm --onefile --windowed --name "InternReportApp" --add-data "Report Format;Report Format" main.py
+   pyinstaller --noconfirm --onefile --windowed --name "InternReportApp" --distpath "Intern Report App" --add-data "Report Format;Report Format" main.py
    ```
 
 3. The generated executable will be available at:
    ```
-   dist/InternReportApp.exe
+   Intern Report App/InternReportApp.exe
    ```
+
 
 ---
 

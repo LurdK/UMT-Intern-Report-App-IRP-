@@ -51,21 +51,23 @@ echo [1/3] Verifying PyInstaller...
 echo [2/3] Building Single Portable .EXE with PyInstaller...
 "!PYTHON_EXE!" -m PyInstaller --noconfirm --onefile --windowed ^
     --name "InternReportApp" ^
+    --distpath "Intern Report App" ^
     --add-data "Report Format;Report Format" ^
     main.py
 
 echo.
-if exist "dist\InternReportApp.exe" (
+if exist "Intern Report App\InternReportApp.exe" (
     echo ========================================================
     echo   BUILD SUCCESSFUL!
     echo   Single Portable Executable generated at:
-    echo   dist\InternReportApp.exe
+    echo   Intern Report App\InternReportApp.exe
     echo ========================================================
     echo.
     echo Opening folder...
-    explorer "dist"
+    explorer "Intern Report App"
 ) else (
     echo [ERROR] Build failed. Please check the logs above.
 )
+
 
 pause

@@ -9,6 +9,7 @@ venv/
 ENV/
 build/
 dist/
+Intern Report App/
 *.spec
 
 # User and Temporary Configuration
@@ -18,6 +19,8 @@ scratch/
 # Generated Weekly Reports (Personal Student Data)
 Report/Week*/
 dist/Report/
+Intern Report App/Report/
+
 
 # LaTeX Temporary / Build Files
 *.aux
