@@ -1,0 +1,148 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[many]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+% --- Colors & Styling ---
+\definecolor{umtblue}{RGB}{0, 71, 143}
+\definecolor{boxbg}{RGB}{248, 250, 252} % Light grayish blue for modern look
+\definecolor{boxborder}{RGB}{203, 213, 225}
+
+% tcolorbox setup for modern content blocks
+\tcbset{
+    modernbox/.style={
+        enhanced,
+        breakable,
+        colback=boxbg,
+        colframe=boxborder,
+        boxrule=1pt,
+        arc=4pt,
+        left=10pt,
+        right=10pt,
+        top=10pt,
+        bottom=10pt,
+        fonttitle=\bfseries\large,
+        coltitle=umtblue,
+        colbacktitle=boxbg,
+        attach boxed title to top left={yshift=-2mm, xshift=4mm},
+        boxed title style={colframe=boxbg, colback=boxbg},
+        shadow={2mm}{-1mm}{0mm}{black!10!white}
+    },
+    timelinebox/.style={
+        enhanced,
+        blanker,
+        borderline west={1.5pt}{0pt}{umtblue},
+        left=15pt,
+        top=20pt,
+        bottom=10pt,
+        before skip=0pt,
+        after skip=0pt,
+        underlay={
+            \filldraw[umtblue] ([xshift=0.75pt, yshift=-5pt]frame.north west) circle (3.5pt);
+            \node[anchor=west, font=\bfseries\color{umtblue}, inner sep=0pt] at ([xshift=15pt, yshift=-5pt]frame.north west) {#1};
+        }
+    }
+}
+
+% --- Document Info ---
+\newcommand{\weeknum}{}
+\newcommand{\datefrom}{}
+\newcommand{\dateto}{}
+\newcommand{\matricno}{S70012}
+\newcommand{\leadingzero}[1]{\ifnum#1<10 0\the#1\else\the#1\fi}
+\newcommand{\timestamp}{\leadingzero{\day}/\leadingzero{\month}/\the\year}
+
+\begin{document}
+
+% --- PDF Form Environment (for checkboxes) ---
+\begin{Form}
+
+% --- Header Section ---
+\noindent
+\begin{minipage}[c]{0.2\textwidth}
+    % The user will add "UMT Logo.png" in this folder.
+    % If the image is not found, LaTeX will show a missing file error unless draft mode is on,
+    % but we can just leave it ready.
+    \includegraphics[width=\linewidth, height=2.5cm, keepaspectratio]{"img/UMT Logo.png"}
+\end{minipage}%
+\begin{minipage}[c]{0.8\textwidth}
+    \raggedleft
+    {\Huge \bfseries \textcolor{umtblue}{e-Logbook}}\\[0.5em]
+    {\large \textbf{CSF4992 / CSF49712 INDUSTRIAL TRAINING}}\\[0.5em]
+    \textbf{Week:} \weeknum \hspace{1em} \textbf{Date:} \datefrom{} to \dateto\\[0.2em]
+    \textbf{Matric No.:} \matricno \hspace{1em} \textbf{Generated:} \timestamp
+\end{minipage}
+
+\vspace{1em}
+\hrule height 1pt
+\vspace{1.5em}
+
+% --- Attendance Section ---
+% GUIDANCE FOR ATTENDANCE:
+% 1. PDF Checkboxes: These checkboxes are interactive. You can click them in your PDF viewer after compiling.
+% 2. Hardcode Check: To have it permanently checked in the code, add `checked=true`: \CheckBox[name=day1,width=1em,height=1em,checked=true]{} Present
+% 3. Medical Leave (MC) / Holidays: Replace the checkbox line for that day with plain text, e.g., \textbf{MC} or \textbf{Public Holiday}
+
+\section*{Daily Attendance}
+\noindent
+\begin{tabularx}{\textwidth}{@{} *{5}{X} @{}}
+    \toprule
+    \textbf{Day 1} & \textbf{Day 2} & \textbf{Day 3} & \textbf{Day 4} & \textbf{Day 5} \\
+    \midrule
+    \CheckBox[name=day1,width=1em,height=1em]{} Present & 
+    \CheckBox[name=day2,width=1em,height=1em]{} Present & 
+    \CheckBox[name=day3,width=1em,height=1em]{} Present & 
+    \CheckBox[name=day4,width=1em,height=1em]{} Present & 
+    \CheckBox[name=day5,width=1em,height=1em]{} Present \\
+    \bottomrule
+\end{tabularx}
+\end{Form}
+
+\vspace{2em}
+
+% --- Main Content Section ---
+\section*{Report For This Week}
+
+\begin{tcolorbox}[modernbox, title={Weekly Activities}]
+    % =========================================================
+    % GUIDANCE FOR NEW DAYS:
+    % To add a new day, copy ONLY the \begin{tcolorbox}[timelinebox...] 
+    % block below down to its \end{tcolorbox}, and paste it here.
+    % DO NOT duplicate the outer "modernbox" block!
+    % =========================================================
+
+    \begin{tcolorbox}[timelinebox={DD/MM/YYYY \textmd{\textcolor{gray}{(Day)}}}]
+        \begin{itemize}[leftmargin=*, noitemsep]
+            \item % Add your daily activities here
+        \end{itemize}
+    \end{tcolorbox}
+    
+    % --- Paste the next day's timelinebox below this line ---
+
+\end{tcolorbox}
+
+\vspace{1em}
+
+\begin{tcolorbox}[modernbox, title={Knowledge / Skills Gained}]
+    \begin{itemize}[leftmargin=*, noitemsep]
+        \item % Add your knowledge or skills gained throughout the week here
+    \end{itemize}
+\end{tcolorbox}
+
+\vspace{1em}
+
+\begin{tcolorbox}[modernbox, title={Problems / Comments / Other Info}]
+    \begin{itemize}[leftmargin=*, noitemsep]
+        \item % Add any problems faced, comments, or other information here
+    \end{itemize}
+\end{tcolorbox}
+
+\end{document}

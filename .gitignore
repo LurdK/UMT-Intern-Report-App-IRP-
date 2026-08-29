@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.spec
+
+# User and Temporary Configuration
+config.json
+scratch/
+
+# Generated Weekly Reports (Personal Student Data)
+Report/Week*/
+dist/Report/
+
+# LaTeX Temporary / Build Files
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.fls
+*.fdb_latexmk
+
+# OS Generated
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.swp
+*.swo
+.agents/
