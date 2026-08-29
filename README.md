@@ -149,7 +149,6 @@ Intern Report App (IRP)/
 
 - **Universiti Malaysia Terengganu (UMT)**: Faculty of Computer Science and Mathematics for the Industrial Training curriculum and logbook format.
 - **LaTeX Community**: For the `tcolorbox`, `tabularx`, and `hyperref` packages used in the report formatting.
-- **Google Antigravity**: For agentic pair programming and assistance in designing and implementing the application.
 
 ---
 
