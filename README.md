@@ -1,6 +1,6 @@
 # Intern Report App (IRP) - e-Logbook Manager
 
-A desktop management and automation system for weekly industrial training logbooks (CSF4992 / CSF49712 Industrial Training) at Universiti Malaysia Terengganu (UMT).
+A desktop management and automation system for weekly industrial training logbooks at Universiti Malaysia Terengganu (UMT).
 
 The application provides a graphical user interface to fill out daily activities, track attendance, record knowledge and skills gained, manage problem statements, and automatically compile structured LaTeX documents into publication-ready PDF reports.
 

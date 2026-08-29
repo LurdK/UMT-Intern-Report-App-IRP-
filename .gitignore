@@ -1,4 +1,6 @@
-# Python
+# ==========================================
+# Python & Environment
+# ==========================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,22 +9,40 @@ __pycache__/
 env/
 venv/
 ENV/
+.env
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+
+# ==========================================
+# PyInstaller & Build Output
+# ==========================================
 build/
 dist/
 Intern Report App/
 *.spec
 
-# User and Temporary Configuration
+# ==========================================
+# User & Runtime Configuration
+# ==========================================
 config.json
 scratch/
 
+# ==========================================
 # Generated Weekly Reports (Personal Student Data)
+# ==========================================
 Report/Week*/
-dist/Report/
-Intern Report App/Report/
+Report/Week*
+Week*/
+Week */
+*.pdf
+!Report Format/
 
-
-# LaTeX Temporary / Build Files
+# ==========================================
+# LaTeX Temporary & Auxiliary Build Files
+# ==========================================
 *.aux
 *.log
 *.out
@@ -30,17 +50,34 @@ Intern Report App/Report/
 *.toc
 *.fls
 *.fdb_latexmk
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+*.bcf
+*.run.xml
 
-# OS Generated
+# ==========================================
+# Operating System Generated
+# ==========================================
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 
-# IDE & Editor Settings
+# ==========================================
+# IDEs & Coding Agents
+# ==========================================
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+*.bak
 .agents/
+.gemini/
