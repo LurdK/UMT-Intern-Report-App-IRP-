@@ -60,11 +60,12 @@ To compile PDF reports, one of the following LaTeX distributions is recommended:
 
 ### Windows (Precompiled Executable)
 
-1. Download **`InternReportApp-v1.0.0-windows-x64.zip`** from the GitHub **Releases** page.
+1. Download the latest precompiled bundle: [InternReportApp-v1.0.0-windows-x64.zip](https://github.com/LurdK/UMT-Intern-Report-App-IRP-/releases/latest/download/InternReportApp-v1.0.0-windows-x64.zip) (or browse all versions on the [Releases](https://github.com/LurdK/UMT-Intern-Report-App-IRP-/releases) page).
 2. Extract the zip file to your preferred folder.
-3. Double-click **`InternReportApp.exe`** to launch the application.
+3. Double-click `InternReportApp.exe` to launch the application.
 4. Click **Create New Week** to start your first weekly report.
 5. Fill in your activities and click **Compile PDF**.
+
 
 ---
 
