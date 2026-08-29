@@ -52,8 +52,12 @@ echo [2/3] Building Single Portable .EXE with PyInstaller...
 "!PYTHON_EXE!" -m PyInstaller --noconfirm --onefile --windowed ^
     --name "InternReportApp" ^
     --distpath "Intern Report App" ^
+    --icon="app_icon.ico" ^
     --add-data "Report Format;Report Format" ^
+    --add-data "app_icon.png;." ^
+    --add-data "app_icon.ico;." ^
     main.py
+
 
 echo.
 if exist "Intern Report App\InternReportApp.exe" (

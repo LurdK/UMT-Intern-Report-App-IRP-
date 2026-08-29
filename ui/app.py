@@ -187,6 +187,9 @@ class InternReportApp(tk.Tk):
         # Configure styles
         self.setup_styles()
 
+        # Apply application icon
+        self.setup_app_icon()
+
         # Build UI layout
         self.build_ui()
 
@@ -200,6 +203,36 @@ class InternReportApp(tk.Tk):
         self.bind_all("<MouseWheel>", self._on_global_mousewheel, add="+")
         self.bind_all("<Button-4>", lambda e: self._on_global_mousewheel(e, delta=120), add="+")
         self.bind_all("<Button-5>", lambda e: self._on_global_mousewheel(e, delta=-120), add="+")
+
+    def setup_app_icon(self):
+        search_dirs = [self.workspace_dir]
+        if hasattr(sys, "_MEIPASS"):
+            search_dirs.insert(0, sys._MEIPASS)
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        search_dirs.append(os.path.abspath(os.path.join(module_dir, "..")))
+
+        # Try PNG iconphoto
+        for s_dir in search_dirs:
+            png_file = os.path.join(s_dir, "app_icon.png")
+            if os.path.exists(png_file):
+                try:
+                    self._icon_img = tk.PhotoImage(file=png_file)
+                    self.iconphoto(True, self._icon_img)
+                    break
+                except Exception:
+                    pass
+
+        # Try Windows ICO iconbitmap
+        if sys.platform == "win32":
+            for s_dir in search_dirs:
+                ico_file = os.path.join(s_dir, "app_icon.ico")
+                if os.path.exists(ico_file):
+                    try:
+                        self.iconbitmap(ico_file)
+                        break
+                    except Exception:
+                        pass
+
 
 
     def setup_styles(self):
