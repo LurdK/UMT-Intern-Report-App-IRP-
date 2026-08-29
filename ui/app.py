@@ -175,12 +175,13 @@ class InternReportApp(tk.Tk):
         self.minsize(820, 580)
 
         self.workspace_dir = os.path.abspath(workspace_dir)
-        self.folder_manager = FolderManager(self.workspace_dir)
         self.config = load_config(self.workspace_dir)
+        self.folder_manager = FolderManager(self.workspace_dir, custom_reports_dir=self.config.get("custom_reports_dir", ""))
 
         self.current_week_info: Optional[Dict[str, Any]] = None
         self.current_data: Dict[str, Any] = {}
         self.sidebar_items: List[Dict[str, Any]] = []
+
 
         # Configure styles
         self.setup_styles()
@@ -291,14 +292,15 @@ class InternReportApp(tk.Tk):
         btn_new_week.pack(fill=tk.X, padx=12, pady=(2, 10))
 
         # Weeks List Section Title
-        sec_label = tk.Label(
+        self.lbl_reports_header = tk.Label(
             self.sidebar_frame,
-            text="REPORTS (Report/)",
+            text=self.get_reports_header_text(),
             font=("Segoe UI", 8, "bold"),
             fg="#64748B",
             bg=COLOR_SIDEBAR_BG
         )
-        sec_label.pack(anchor="w", padx=14, pady=(2, 4))
+        self.lbl_reports_header.pack(anchor="w", padx=14, pady=(2, 4))
+
 
         # Scrollable Week List
         week_list_container = tk.Frame(self.sidebar_frame, bg=COLOR_SIDEBAR_BG)
@@ -1557,13 +1559,28 @@ class InternReportApp(tk.Tk):
         else:
             FolderManager.open_in_explorer(self.current_week_info["path"])
 
+    def get_reports_header_text(self) -> str:
+        rep_dir = self.folder_manager.reports_dir
+        try:
+            rel = os.path.relpath(rep_dir, self.workspace_dir)
+            if not rel.startswith(".."):
+                return f"REPORTS ({rel}/)"
+        except Exception:
+            pass
+        folder_base = os.path.basename(rep_dir) or rep_dir
+        return f"REPORTS ({folder_base}/)"
+
     def open_settings_dialog(self):
         def on_saved(new_config):
             self.config = new_config
+            self.folder_manager.set_reports_dir(self.config.get("custom_reports_dir", ""))
+            self.lbl_reports_header.configure(text=self.get_reports_header_text())
             self.update_compiler_badge()
-            self.set_status("Settings saved.")
+            self.refresh_week_list()
+            self.set_status("Settings saved. Reports directory updated.")
 
         SettingsDialog(self, self.workspace_dir, self.config, on_save_callback=on_saved)
+
 
     def show_missing_compiler_dialog(self):
         msg_win = tk.Toplevel(self)

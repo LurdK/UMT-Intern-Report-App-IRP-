@@ -6,13 +6,18 @@ import sys
 from typing import List, Dict, Optional
 
 class FolderManager:
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str, custom_reports_dir: Optional[str] = None):
         self.root_dir = os.path.abspath(root_dir)
-        self.reports_dir = os.path.join(self.root_dir, "Report")
+        self.set_reports_dir(custom_reports_dir)
         self.template_dir = self._resolve_template_path()
-        
-        # Ensure Report folder exists
+
+    def set_reports_dir(self, custom_reports_dir: Optional[str] = None):
+        if custom_reports_dir and custom_reports_dir.strip():
+            self.reports_dir = os.path.abspath(custom_reports_dir.strip())
+        else:
+            self.reports_dir = os.path.join(self.root_dir, "Report")
         os.makedirs(self.reports_dir, exist_ok=True)
+
 
     def _resolve_template_path(self) -> str:
         # 1. Local workspace "Report Format"

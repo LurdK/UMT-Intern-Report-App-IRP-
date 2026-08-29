@@ -7,9 +7,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "course_code": "CSF4992 / CSF49712 INDUSTRIAL TRAINING",
     "student_name": "",
     "custom_pdflatex_path": "",
+    "custom_reports_dir": "",
     "auto_clean_aux": True,
     "theme": "light"
 }
+
 
 def get_config_path(base_dir: str) -> str:
     return os.path.join(base_dir, "config.json")
