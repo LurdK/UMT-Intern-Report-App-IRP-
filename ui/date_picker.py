@@ -4,6 +4,7 @@ import re
 import tkinter as tk
 from tkinter import ttk
 from typing import Optional, Callable
+from backend.i18n import get_language, t
 
 COLOR_PRIMARY = "#00478F"
 COLOR_PRIMARY_HOVER = "#003366"
@@ -13,6 +14,21 @@ COLOR_TODAY = "#0284C7"
 COLOR_HOVER = "#E0F2FE"
 COLOR_SURFACE = "#FFFFFF"
 COLOR_BG = "#F8FAFC"
+
+DAY_NAMES_MS = {
+    "Monday": "Isnin",
+    "Tuesday": "Selasa",
+    "Wednesday": "Rabu",
+    "Thursday": "Khamis",
+    "Friday": "Jumaat",
+    "Saturday": "Sabtu",
+    "Sunday": "Ahad"
+}
+
+MONTH_NAMES_MS = [
+    "", "Januari", "Februari", "Mac", "April", "Mei", "Jun",
+    "Julai", "Ogos", "September", "Oktober", "November", "Disember"
+]
 
 def parse_date_string(date_str: str) -> Optional[datetime.date]:
     """
@@ -44,7 +60,7 @@ def parse_date_string(date_str: str) -> Optional[datetime.date]:
 class DatePickerDialog(tk.Toplevel):
     def __init__(self, parent: tk.Tk, initial_date: Optional[datetime.date] = None, include_day_name: bool = True, on_selected: Optional[Callable[[str], None]] = None):
         super().__init__(parent)
-        self.title("Select Date")
+        self.title(t("pick_date"))
         self.geometry("320x330")
         self.resizable(False, False)
         self.transient(parent)
@@ -125,9 +141,10 @@ class DatePickerDialog(tk.Toplevel):
         bottom_bar = tk.Frame(container, bg=COLOR_BG)
         bottom_bar.pack(fill=tk.X, pady=(8, 0))
 
+        today_text = "Hari Ini" if get_language() == "ms" else "Today"
         btn_today = tk.Button(
             bottom_bar,
-            text="Today",
+            text=today_text,
             font=("Segoe UI", 8),
             fg="#0284C7",
             bg="#F0F9FF",
@@ -139,9 +156,10 @@ class DatePickerDialog(tk.Toplevel):
         )
         btn_today.pack(side=tk.LEFT)
 
+        cancel_text = t("settings_btn_cancel")
         btn_cancel = tk.Button(
             bottom_bar,
-            text="Cancel",
+            text=cancel_text,
             font=("Segoe UI", 8),
             fg="#64748B",
             bg="#F1F5F9",
@@ -161,11 +179,16 @@ class DatePickerDialog(tk.Toplevel):
             child.destroy()
 
         # Update Month/Year Label
-        month_name = calendar.month_name[self.current_month]
+        if get_language() == "ms":
+            month_name = MONTH_NAMES_MS[self.current_month]
+            day_headers = ["Isn", "Sel", "Rab", "Kha", "Jum", "Sab", "Ahd"]
+        else:
+            month_name = calendar.month_name[self.current_month]
+            day_headers = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+
         self.lbl_month_year.configure(text=f"{month_name} {self.current_year}")
 
-        # Day of week headers (Mon to Sun)
-        day_headers = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+        # Day of week headers
         for col, h in enumerate(day_headers):
             lbl = tk.Label(
                 self.cal_frame,
@@ -233,7 +256,12 @@ class DatePickerDialog(tk.Toplevel):
 
     def on_day_clicked(self, date_obj: datetime.date):
         if self.include_day_name:
-            formatted = date_obj.strftime("%d/%m/%Y (%A)")
+            day_en = date_obj.strftime("%A")
+            if get_language() == "ms":
+                day_str = DAY_NAMES_MS.get(day_en, day_en)
+            else:
+                day_str = day_en
+            formatted = f"{date_obj.strftime('%d/%m/%Y')} ({day_str})"
         else:
             formatted = date_obj.strftime("%d/%m/%Y")
 

@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog
 import webbrowser
 from typing import Dict, Any, List, Optional
+import datetime
 
 from backend.storage import (
     load_config,
@@ -24,9 +25,10 @@ from backend.compiler import (
     MIKTEX_URL,
     TEXLIVE_URL
 )
+from backend.i18n import t, set_language, get_language
 from ui.settings_dialog import SettingsDialog
 from ui.about_dialog import AboutDialog
-from ui.date_picker import open_date_picker
+from ui.date_picker import open_date_picker, parse_date_string
 
 
 # Color Palette (UMT Brand Colors & Modern Slate)
@@ -75,7 +77,7 @@ class ScrollableFrame(tk.Frame):
 class CreateWeekDialog(tk.Toplevel):
     def __init__(self, parent: tk.Tk, default_name: str, default_num: int):
         super().__init__(parent)
-        self.title("Create New Week Log")
+        self.title(t("dialog_create_week_title"))
         self.geometry("440x220")
         self.resizable(False, False)
         self.transient(parent)
@@ -96,7 +98,7 @@ class CreateWeekDialog(tk.Toplevel):
 
         tk.Label(
             container,
-            text="➕ Create New Report Folder",
+            text=f"➕ {t('dialog_create_week_title')}",
             font=("Segoe UI", 12, "bold"),
             fg=COLOR_PRIMARY,
             bg="#F8FAFC"
@@ -105,12 +107,12 @@ class CreateWeekDialog(tk.Toplevel):
         form = tk.Frame(container, bg="#FFFFFF", padx=12, pady=10, highlightbackground="#E2E8F0", highlightthickness=1)
         form.pack(fill=tk.X, pady=(0, 14))
 
-        tk.Label(form, text="Folder Name:", font=("Segoe UI", 9, "bold"), bg="#FFFFFF").grid(row=0, column=0, sticky="w", pady=4)
+        tk.Label(form, text=f"{t('dialog_create_week_prompt')}", font=("Segoe UI", 9, "bold"), bg="#FFFFFF").grid(row=0, column=0, sticky="w", pady=4)
         self.entry_name = ttk.Entry(form, width=28)
         self.entry_name.insert(0, default_name)
         self.entry_name.grid(row=0, column=1, sticky="ew", pady=4, padx=(8, 0))
 
-        tk.Label(form, text="Week Number:", font=("Segoe UI", 9, "bold"), bg="#FFFFFF").grid(row=1, column=0, sticky="w", pady=4)
+        tk.Label(form, text=f"{t('week_number')}", font=("Segoe UI", 9, "bold"), bg="#FFFFFF").grid(row=1, column=0, sticky="w", pady=4)
         self.entry_num = ttk.Entry(form, width=28)
         self.entry_num.insert(0, str(default_num))
         self.entry_num.grid(row=1, column=1, sticky="ew", pady=4, padx=(8, 0))
@@ -122,7 +124,7 @@ class CreateWeekDialog(tk.Toplevel):
 
         btn_create = tk.Button(
             btn_row,
-            text="Create Week",
+            text=t("create_new_week").replace("+", "").strip(),
             font=("Segoe UI", 9, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -137,7 +139,7 @@ class CreateWeekDialog(tk.Toplevel):
 
         btn_cancel = tk.Button(
             btn_row,
-            text="Cancel",
+            text=t("settings_btn_cancel"),
             font=("Segoe UI", 9),
             fg="#475569",
             bg="#E2E8F0",
@@ -168,21 +170,23 @@ class CreateWeekDialog(tk.Toplevel):
         self.destroy()
 
 
+
 class InternReportApp(tk.Tk):
     def __init__(self, workspace_dir: str):
         super().__init__()
-        self.title("UMT Intern Report Manager (IRP)")
         self.geometry("1060x760")
         self.minsize(820, 580)
 
         self.workspace_dir = os.path.abspath(workspace_dir)
         self.config = load_config(self.workspace_dir)
+        set_language(self.config.get("language", "en"))
+        self.title(t("app_title"))
+
         self.folder_manager = FolderManager(self.workspace_dir, custom_reports_dir=self.config.get("custom_reports_dir", ""))
 
         self.current_week_info: Optional[Dict[str, Any]] = None
         self.current_data: Dict[str, Any] = {}
         self.sidebar_items: List[Dict[str, Any]] = []
-
 
         # Configure styles
         self.setup_styles()
@@ -233,8 +237,6 @@ class InternReportApp(tk.Tk):
                     except Exception:
                         pass
 
-
-
     def setup_styles(self):
         self.configure(bg=COLOR_BG)
         style = ttk.Style(self)
@@ -267,7 +269,7 @@ class InternReportApp(tk.Tk):
 
         self.lbl_status = tk.Label(
             self.status_bar,
-            text="Ready",
+            text=t("status_ready"),
             font=("Segoe UI", 8),
             fg="#475569",
             bg="#E2E8F0"
@@ -296,8 +298,15 @@ class InternReportApp(tk.Tk):
                 except Exception:
                     pass
             if timeout_ms > 0 and not is_error:
-                self._status_timer = self.after(timeout_ms, lambda: self.lbl_status.configure(text="Ready", fg="#475569"))
+                self._status_timer = self.after(timeout_ms, lambda: self.lbl_status.configure(text=t("status_ready"), fg="#475569"))
 
+    def update_compiler_badge(self):
+        diag = check_latex_environment(self.config.get("custom_pdflatex_path", ""))
+        if diag["available"]:
+            self.lbl_compiler_badge.configure(text="✅ pdflatex Ready", fg=COLOR_SUCCESS)
+        else:
+            self.lbl_compiler_badge.configure(text="⚠️ pdflatex Missing (Click to setup)", fg=COLOR_DANGER, cursor="hand2")
+            self.lbl_compiler_badge.bind("<Button-1>", lambda e: self.open_settings_dialog())
 
     def build_sidebar(self):
         # Header / Branding
@@ -315,7 +324,7 @@ class InternReportApp(tk.Tk):
 
         lbl_subtitle = tk.Label(
             brand_frame,
-            text="Industrial Training Manager",
+            text=t("app_sub"),
             font=("Segoe UI", 8),
             fg="#94A3B8",
             bg=COLOR_SIDEBAR_BG
@@ -325,7 +334,7 @@ class InternReportApp(tk.Tk):
         # Action: New Week Button
         btn_new_week = tk.Button(
             self.sidebar_frame,
-            text="➕  Create New Week",
+            text=t("create_new_week"),
             font=("Segoe UI", 9, "bold"),
             bg=COLOR_PRIMARY,
             fg="#FFFFFF",
@@ -348,7 +357,6 @@ class InternReportApp(tk.Tk):
             bg=COLOR_SIDEBAR_BG
         )
         self.lbl_reports_header.pack(anchor="w", padx=14, pady=(2, 4))
-
 
         # Scrollable Week List
         week_list_container = tk.Frame(self.sidebar_frame, bg=COLOR_SIDEBAR_BG)
@@ -376,7 +384,6 @@ class InternReportApp(tk.Tk):
         self.week_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.week_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-
         # Bottom Tools Frame
         bottom_tools = tk.Frame(self.sidebar_frame, bg="#0B1120", padx=10, pady=8)
         bottom_tools.pack(fill=tk.X, side=tk.BOTTOM)
@@ -386,7 +393,7 @@ class InternReportApp(tk.Tk):
 
         btn_settings = tk.Button(
             row1,
-            text="⚙️ Settings",
+            text=t("settings"),
             font=("Segoe UI", 8),
             fg="#CBD5E1",
             bg="#1E293B",
@@ -401,7 +408,7 @@ class InternReportApp(tk.Tk):
 
         btn_refresh = tk.Button(
             row1,
-            text="🔄 Refresh",
+            text=t("refresh"),
             font=("Segoe UI", 8),
             fg="#CBD5E1",
             bg="#1E293B",
@@ -416,7 +423,7 @@ class InternReportApp(tk.Tk):
 
         btn_about = tk.Button(
             bottom_tools,
-            text="ℹ️ About",
+            text=t("about"),
             font=("Segoe UI", 8),
             fg="#94A3B8",
             bg="#0F172A",
@@ -430,7 +437,6 @@ class InternReportApp(tk.Tk):
         )
         btn_about.pack(fill=tk.X)
 
-
     def build_main_workspace(self):
         self.scroll_area = ScrollableFrame(self.main_content_frame)
         self.scroll_area.pack(fill=tk.BOTH, expand=True)
@@ -440,14 +446,14 @@ class InternReportApp(tk.Tk):
         self.empty_state_frame = tk.Frame(self.content, bg=COLOR_BG, pady=80)
         tk.Label(
             self.empty_state_frame,
-            text="No Report Selected",
+            text=t("no_reports").split("\n")[0],
             font=("Segoe UI", 16, "bold"),
             fg="#64748B",
             bg=COLOR_BG
         ).pack(pady=(0, 8))
         tk.Label(
             self.empty_state_frame,
-            text="Select an existing report folder or click 'Create New Week' to begin.",
+            text=t("no_reports").split("\n")[1] if "\n" in t("no_reports") else "",
             font=("Segoe UI", 10),
             fg="#94A3B8",
             bg=COLOR_BG
@@ -503,7 +509,7 @@ class InternReportApp(tk.Tk):
 
         btn_rename = tk.Button(
             title_box,
-            text="✏️ Rename",
+            text=t("btn_rename_week"),
             font=("Segoe UI", 8),
             fg="#64748B",
             bg="#F1F5F9",
@@ -521,7 +527,7 @@ class InternReportApp(tk.Tk):
 
         btn_save = tk.Button(
             btn_box,
-            text="💾 Save",
+            text=t("btn_save_draft").split("(")[0].strip(),
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg="#475569",
@@ -551,7 +557,7 @@ class InternReportApp(tk.Tk):
 
         self.btn_compile_pdf = tk.Button(
             btn_box,
-            text="🚀 Compile PDF",
+            text=t("btn_compile_pdf"),
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -566,7 +572,7 @@ class InternReportApp(tk.Tk):
 
         btn_view_pdf = tk.Button(
             btn_box,
-            text="👁️ View",
+            text=t("btn_view_pdf"),
             font=("Segoe UI", 8),
             fg=COLOR_TEXT_MAIN,
             bg="#E2E8F0",
@@ -581,7 +587,7 @@ class InternReportApp(tk.Tk):
 
         btn_open_folder = tk.Button(
             btn_box,
-            text="📂 Folder",
+            text=t("btn_open_folder"),
             font=("Segoe UI", 8),
             fg=COLOR_TEXT_MAIN,
             bg="#E2E8F0",
@@ -593,6 +599,21 @@ class InternReportApp(tk.Tk):
             command=self.open_folder_action
         )
         btn_open_folder.pack(side=tk.LEFT, padx=2)
+
+        btn_del_week = tk.Button(
+            btn_box,
+            text=t("btn_delete_week"),
+            font=("Segoe UI", 8),
+            fg="#DC2626",
+            bg="#FEF2F2",
+            activebackground="#FEE2E2",
+            relief=tk.FLAT,
+            padx=6,
+            pady=3,
+            cursor="hand2",
+            command=self.delete_week_action
+        )
+        btn_del_week.pack(side=tk.LEFT, padx=2)
 
         # Row 2: Subtitle/Path Info
         self.lbl_week_status = tk.Label(
@@ -618,51 +639,50 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             meta_card,
-            text="Week Information & Document Details",
+            text="Document Information",
             font=("Segoe UI", 10, "bold"),
             fg=COLOR_PRIMARY,
             bg=COLOR_SURFACE
         ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 6))
 
         # Week Num
-        tk.Label(meta_card, text="Week Number:", font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=1, column=0, sticky="w", pady=3)
+        tk.Label(meta_card, text=t("week_number"), font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=1, column=0, sticky="w", pady=3)
         self.entry_week_num = ttk.Entry(meta_card)
         self.entry_week_num.grid(row=1, column=1, sticky="ew", pady=3, padx=(6, 14))
 
         # Matric No
-        tk.Label(meta_card, text="Matric Number:", font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=1, column=2, sticky="w", pady=3)
+        tk.Label(meta_card, text=t("matric_no"), font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=1, column=2, sticky="w", pady=3)
         self.entry_matric = ttk.Entry(meta_card)
         self.entry_matric.grid(row=1, column=3, sticky="ew", pady=3, padx=(6, 0))
 
         # Date From
-        tk.Label(meta_card, text="Date From:", font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=2, column=0, sticky="w", pady=3)
+        tk.Label(meta_card, text=t("date_from"), font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=2, column=0, sticky="w", pady=3)
         df_box = tk.Frame(meta_card, bg=COLOR_SURFACE)
         df_box.grid(row=2, column=1, sticky="ew", pady=3, padx=(6, 14))
         self.entry_date_from = ttk.Entry(df_box)
         self.entry_date_from.pack(side=tk.LEFT, fill=tk.X, expand=True)
         btn_df_pick = tk.Button(
-            df_box, text="📅 Pick", font=("Segoe UI", 8), fg=COLOR_PRIMARY, bg="#F0F9FF",
+            df_box, text=t("pick_date"), font=("Segoe UI", 8), fg=COLOR_PRIMARY, bg="#F0F9FF",
             activebackground="#E0F2FE", relief=tk.FLAT, padx=4, pady=1, cursor="hand2",
             command=lambda: open_date_picker(self, self.entry_date_from, include_day_name=False)
         )
         btn_df_pick.pack(side=tk.RIGHT, padx=(4, 0))
 
         # Date To
-        tk.Label(meta_card, text="Date To:", font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=2, column=2, sticky="w", pady=3)
+        tk.Label(meta_card, text=t("date_to"), font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=2, column=2, sticky="w", pady=3)
         dt_box = tk.Frame(meta_card, bg=COLOR_SURFACE)
         dt_box.grid(row=2, column=3, sticky="ew", pady=3, padx=(6, 0))
         self.entry_date_to = ttk.Entry(dt_box)
         self.entry_date_to.pack(side=tk.LEFT, fill=tk.X, expand=True)
         btn_dt_pick = tk.Button(
-            dt_box, text="📅 Pick", font=("Segoe UI", 8), fg=COLOR_PRIMARY, bg="#F0F9FF",
+            dt_box, text=t("pick_date"), font=("Segoe UI", 8), fg=COLOR_PRIMARY, bg="#F0F9FF",
             activebackground="#E0F2FE", relief=tk.FLAT, padx=4, pady=1, cursor="hand2",
             command=lambda: open_date_picker(self, self.entry_date_to, include_day_name=False)
         )
         btn_dt_pick.pack(side=tk.RIGHT, padx=(4, 0))
 
-
         # Course Code
-        tk.Label(meta_card, text="Course Title:", font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=3, column=0, sticky="w", pady=3)
+        tk.Label(meta_card, text=t("course_title"), font=("Segoe UI", 8, "bold"), bg=COLOR_SURFACE).grid(row=3, column=0, sticky="w", pady=3)
         self.entry_course = ttk.Entry(meta_card)
         self.entry_course.grid(row=3, column=1, columnspan=3, sticky="ew", pady=3, padx=(6, 0))
 
@@ -685,7 +705,7 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             header_row,
-            text="Daily Attendance (Interactive Checkboxes / Status)",
+            text=t("sec_attendance"),
             font=("Segoe UI", 10, "bold"),
             fg=COLOR_PRIMARY,
             bg=COLOR_SURFACE
@@ -693,7 +713,7 @@ class InternReportApp(tk.Tk):
 
         btn_add_att_day = tk.Button(
             header_row,
-            text="➕ Add Day",
+            text=t("add_day"),
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -727,7 +747,7 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             header_row,
-            text="Weekly Activities (Timeline Days & Tasks)",
+            text=t("sec_activities"),
             font=("Segoe UI", 10, "bold"),
             fg=COLOR_PRIMARY,
             bg=COLOR_SURFACE
@@ -735,7 +755,7 @@ class InternReportApp(tk.Tk):
 
         btn_add_day = tk.Button(
             header_row,
-            text="➕ Add Day Entry",
+            text=t("add_day"),
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -769,7 +789,7 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             header_row,
-            text="Knowledge / Skills Gained",
+            text=t("sec_skills"),
             font=("Segoe UI", 10, "bold"),
             fg=COLOR_PRIMARY,
             bg=COLOR_SURFACE
@@ -777,7 +797,7 @@ class InternReportApp(tk.Tk):
 
         btn_add_skill = tk.Button(
             header_row,
-            text="➕ Add Bullet Point",
+            text=t("add_skill_bullet"),
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -811,7 +831,7 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             header_row,
-            text="Problems / Comments / Other Info",
+            text=t("sec_problems"),
             font=("Segoe UI", 10, "bold"),
             fg=COLOR_PRIMARY,
             bg=COLOR_SURFACE
@@ -819,7 +839,7 @@ class InternReportApp(tk.Tk):
 
         btn_add_comment = tk.Button(
             header_row,
-            text="➕ Add Bullet Point",
+            text=t("add_problem_bullet"),
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -837,20 +857,6 @@ class InternReportApp(tk.Tk):
 
         self.comment_bullet_widgets: List[Dict[str, Any]] = []
 
-    def set_status(self, text: str, is_error: bool = False):
-        self.lbl_status.configure(
-            text=text,
-            fg=COLOR_DANGER if is_error else "#334155"
-        )
-
-    def update_compiler_badge(self):
-        diag = check_latex_environment(self.config.get("custom_pdflatex_path", ""))
-        if diag["available"]:
-            self.lbl_compiler_badge.configure(text="✅ pdflatex Ready", fg=COLOR_SUCCESS)
-        else:
-            self.lbl_compiler_badge.configure(text="⚠️ pdflatex Missing (Click to setup)", fg=COLOR_DANGER, cursor="hand2")
-            self.lbl_compiler_badge.bind("<Button-1>", lambda e: self.open_settings_dialog())
-
     def _safe_scroll_canvas(self, canvas: tk.Canvas, content_frame: tk.Frame, units: int):
         req_h = content_frame.winfo_reqheight()
         canvas_h = canvas.winfo_height()
@@ -858,12 +864,10 @@ class InternReportApp(tk.Tk):
             canvas.yview_moveto(0.0)
             return
 
-        # If already at top and scrolling up
         if units < 0 and canvas.canvasy(0) <= 0:
             canvas.yview_moveto(0.0)
             return
 
-        # If already at bottom and scrolling down
         top, bottom = canvas.yview()
         if units > 0 and bottom >= 1.0:
             return
@@ -873,10 +877,6 @@ class InternReportApp(tk.Tk):
             canvas.yview_moveto(0.0)
 
     def _on_global_mousewheel(self, event, delta: Optional[int] = None):
-        """
-        Global handler allowing scrolling from anywhere in the window with bounds clamping.
-        """
-        # If a popup modal dialog is open and focused, skip parent scrolling
         try:
             toplevel = event.widget.winfo_toplevel()
             if toplevel != self:
@@ -891,7 +891,6 @@ class InternReportApp(tk.Tk):
         if units == 0:
             units = -1 if d > 0 else 1
 
-        # Check if cursor is over the sidebar
         try:
             sb_x = self.sidebar_frame.winfo_rootx()
             sb_w = self.sidebar_frame.winfo_width()
@@ -904,21 +903,12 @@ class InternReportApp(tk.Tk):
         except Exception:
             pass
 
-        # Otherwise scroll main scrollable frame
         try:
             self._safe_scroll_canvas(self.scroll_area.canvas, self.scroll_area.scrollable_content, units)
         except Exception:
             pass
 
-
-    # ==========================================
-    # WEEK LIST & NAVIGATION
-    # ==========================================
-
     def update_sidebar_active_state(self, active_path: Optional[str]):
-        """
-        Visually highlights the currently active week in the sidebar.
-        """
         for item in self.sidebar_items:
             is_active = (item["path"] == active_path)
             btn_bg = "#1E293B" if is_active else "#0F172A"
@@ -945,7 +935,7 @@ class InternReportApp(tk.Tk):
         if not weeks:
             lbl_empty = tk.Label(
                 self.week_buttons_frame,
-                text="No reports found.\nClick '+ Create New Week'",
+                text=t("no_reports"),
                 font=("Segoe UI", 8),
                 fg="#64748B",
                 bg=COLOR_SIDEBAR_BG,
@@ -1036,7 +1026,6 @@ class InternReportApp(tk.Tk):
         )
         self.set_status(f"Loaded {week_info['name']}")
 
-
     def create_new_week_action(self):
         next_num = self.folder_manager.get_next_week_number()
         default_folder_name = f"Week {next_num} Log"
@@ -1073,15 +1062,14 @@ class InternReportApp(tk.Tk):
         current_path = self.current_week_info["path"]
 
         new_name = simpledialog.askstring(
-            "Rename Report Folder",
-            "Enter new name for this report folder:",
+            t("dialog_rename_title"),
+            t("dialog_rename_prompt", old_name=current_name),
             initialvalue=current_name,
             parent=self
         )
 
         if new_name and new_name.strip() and new_name.strip() != current_name:
             try:
-                # Save draft first
                 self.save_current_data(show_toast=False)
                 new_path = self.folder_manager.rename_week_folder(current_path, new_name.strip())
                 self.current_week_info["name"] = new_name.strip()
@@ -1096,9 +1084,26 @@ class InternReportApp(tk.Tk):
             except Exception as e:
                 messagebox.showerror("Error Renaming", str(e), parent=self)
 
-    # ==========================================
-    # FORM POPULATION & EXTRACTION
-    # ==========================================
+    def delete_week_action(self):
+        if not self.current_week_info:
+            return
+        current_name = self.current_week_info["name"]
+        current_path = self.current_week_info["path"]
+
+        ans = messagebox.askyesno(
+            t("dialog_confirm_delete_title"),
+            t("dialog_confirm_delete_msg", name=current_name),
+            icon="warning",
+            parent=self
+        )
+        if ans:
+            try:
+                self.folder_manager.delete_week_folder(current_path)
+                self.current_week_info = None
+                self.refresh_week_list()
+                self.set_status(f"Deleted {current_name}")
+            except Exception as e:
+                messagebox.showerror("Error Deleting", str(e), parent=self)
 
     def populate_form(self, data: Dict[str, Any]):
         # Metadata
@@ -1178,11 +1183,21 @@ class InternReportApp(tk.Tk):
             status_val = item["status_var"].get()
 
             status_map = {
+                t("status_present"): "present",
                 "Present": "present",
+                "Hadir": "present",
+                t("status_mc"): "mc",
                 "MC": "mc",
+                "MC (Cuti Sakit)": "mc",
+                t("status_holiday"): "holiday",
                 "Public Holiday": "holiday",
+                "Cuti Umum": "holiday",
+                t("status_leave"): "leave",
                 "Leave": "leave",
-                "Absent": "absent"
+                "Cuti Rehat": "leave",
+                t("status_absent"): "absent",
+                "Absent": "absent",
+                "Tidak Hadir": "absent"
             }
             clean_status = status_map.get(status_val, "present" if checked else "absent")
             if checked:
@@ -1220,10 +1235,6 @@ class InternReportApp(tk.Tk):
                 data["problems_comments"].append(txt)
 
         return data
-
-    # ==========================================
-    # DYNAMIC ATTENDANCE TILES
-    # ==========================================
 
     def add_attendance_day_slot(self, label: str = "", status: str = "present", checked: bool = True):
         idx = len(self.att_day_widgets) + 1
@@ -1265,21 +1276,35 @@ class InternReportApp(tk.Tk):
         btn_del.pack(side=tk.RIGHT)
 
         check_var = tk.BooleanVar(value=checked)
-        status_options = ["Present", "MC", "Public Holiday", "Leave", "Absent"]
         
-        status_reverse = {
-            "present": "Present",
-            "mc": "MC",
-            "holiday": "Public Holiday",
-            "leave": "Leave",
-            "absent": "Absent"
-        }
-        initial_status = status_reverse.get(status.lower(), "Present" if checked else "Absent")
+        # Bilingual status dropdown
+        if get_language() == "ms":
+            status_options = ["Hadir", "MC (Cuti Sakit)", "Cuti Umum", "Cuti Rehat", "Tidak Hadir"]
+            status_reverse = {
+                "present": "Hadir",
+                "mc": "MC (Cuti Sakit)",
+                "holiday": "Cuti Umum",
+                "leave": "Cuti Rehat",
+                "absent": "Tidak Hadir"
+            }
+            cb_text = "Hadir"
+        else:
+            status_options = ["Present", "MC", "Public Holiday", "Leave", "Absent"]
+            status_reverse = {
+                "present": "Present",
+                "mc": "MC",
+                "holiday": "Public Holiday",
+                "leave": "Leave",
+                "absent": "Absent"
+            }
+            cb_text = "Present"
+
+        initial_status = status_reverse.get(status.lower(), status_options[0] if checked else status_options[-1])
         status_var = tk.StringVar(value=initial_status)
 
         cb = ttk.Checkbutton(
             tile_frame,
-            text="Present",
+            text=cb_text,
             variable=check_var
         )
         cb.pack(anchor="w", pady=(1, 1))
@@ -1296,157 +1321,145 @@ class InternReportApp(tk.Tk):
 
         def on_check_toggled():
             if check_var.get():
-                status_var.set("Present")
+                status_var.set(status_options[0])
             else:
-                if status_var.get() == "Present":
-                    status_var.set("Absent")
+                if status_var.get() == status_options[0]:
+                    status_var.set(status_options[-1])
 
-        cb.configure(command=on_check_toggled)
-
-        def on_status_selected(event):
-            sel = status_var.get()
-            if sel == "Present":
+        def on_combo_changed(e):
+            if status_var.get() == status_options[0]:
                 check_var.set(True)
             else:
                 check_var.set(False)
 
-        status_combo.bind("<<ComboboxSelected>>", on_status_selected)
+        cb.configure(command=on_check_toggled)
+        status_combo.bind("<<ComboboxSelected>>", on_combo_changed)
 
-        day_dict = {
+        item_dict = {
             "frame": tile_frame,
             "label_entry": label_entry,
             "check_var": check_var,
             "status_var": status_var
         }
 
-        btn_del.configure(command=lambda: self.remove_attendance_day_slot(day_dict))
-        self.att_day_widgets.append(day_dict)
+        btn_del.configure(command=lambda: self.remove_attendance_day_slot(item_dict))
+        self.att_day_widgets.append(item_dict)
 
-    def remove_attendance_day_slot(self, day_dict: Dict[str, Any]):
-        if len(self.att_day_widgets) <= 1:
-            messagebox.showwarning("Warning", "At least one attendance day is required.", parent=self)
-            return
-        day_dict["frame"].destroy()
-        if day_dict in self.att_day_widgets:
-            self.att_day_widgets.remove(day_dict)
+    def remove_attendance_day_slot(self, item_dict: Dict[str, Any]):
+        item_dict["frame"].destroy()
+        if item_dict in self.att_day_widgets:
+            self.att_day_widgets.remove(item_dict)
         self.regrid_attendance_tiles()
 
     def regrid_attendance_tiles(self):
-        for i, item in enumerate(self.att_day_widgets):
-            row_pos = i // 5
-            col_pos = i % 5
-            item["frame"].grid(row=row_pos, column=col_pos, padx=3, pady=3, sticky="nsew")
-            self.attendance_grid.columnconfigure(col_pos, weight=1)
-
-    # ==========================================
-    # DYNAMIC ACTIVITIES & BULLETS
-    # ==========================================
+        for idx, item in enumerate(self.att_day_widgets):
+            r = idx // 5
+            c = idx % 5
+            item["frame"].grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
 
     def add_activity_day_block(self, date_label: str = "", items: Optional[List[str]] = None):
-        day_frame = tk.Frame(
+        idx = len(self.activity_day_widgets) + 1
+        if not date_label:
+            day_name = "Isnin" if get_language() == "ms" else "Monday"
+            date_label = f"DD/MM/YYYY ({day_name})"
+        if items is None:
+            items = [""]
+
+        day_card = tk.Frame(
             self.days_container,
             bg="#F8FAFC",
             padx=10,
             pady=8,
-            highlightbackground="#CBD5E1",
+            highlightbackground="#E2E8F0",
             highlightthickness=1
         )
-        day_frame.pack(fill=tk.X, pady=4)
+        day_card.pack(fill=tk.X, pady=(0, 8))
 
-        top_row = tk.Frame(day_frame, bg="#F8FAFC")
-        top_row.pack(fill=tk.X, pady=(0, 4))
+        top_row = tk.Frame(day_card, bg="#F8FAFC")
+        top_row.pack(fill=tk.X, pady=(0, 6))
 
         tk.Label(
             top_row,
-            text="📅 Date / Day Label:",
+            text=f"Day {idx}:",
             font=("Segoe UI", 9, "bold"),
             fg=COLOR_PRIMARY,
             bg="#F8FAFC"
         ).pack(side=tk.LEFT, padx=(0, 6))
 
-        entry_date = ttk.Entry(top_row)
-        entry_date.insert(0, date_label or "DD/MM/YYYY (Day)")
-        entry_date.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6))
+        entry_date = ttk.Entry(top_row, width=28)
+        entry_date.insert(0, date_label)
+        entry_date.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        btn_pick_date = tk.Button(
+        btn_pick = tk.Button(
             top_row,
-            text="📅 Pick Date",
-            font=("Segoe UI", 8, "bold"),
-            fg=COLOR_PRIMARY,
-            bg="#E0F2FE",
-            activebackground="#BAE6FD",
-            relief=tk.FLAT,
-            padx=8,
-            pady=2,
-            cursor="hand2",
-            command=lambda: open_date_picker(self, entry_date, include_day_name=True)
-        )
-        btn_pick_date.pack(side=tk.LEFT, padx=(0, 8))
-
-
-        day_dict = {
-            "frame": day_frame,
-            "entry_date": entry_date,
-            "items_container": None,
-            "items": []
-        }
-
-        btn_delete_day = tk.Button(
-            top_row,
-            text="🗑️ Delete Day",
+            text=t("pick_date"),
             font=("Segoe UI", 8),
-            fg=COLOR_DANGER,
-            bg="#FEE2E2",
-            activebackground="#FECACA",
+            fg=COLOR_PRIMARY,
+            bg="#F0F9FF",
+            activebackground="#E0F2FE",
             relief=tk.FLAT,
             padx=6,
-            pady=2,
+            pady=1,
             cursor="hand2",
-            command=lambda: self.remove_activity_day_block(day_dict)
+            command=lambda e=entry_date: open_date_picker(self, e, include_day_name=True)
         )
-        btn_delete_day.pack(side=tk.RIGHT)
-
-        items_container = tk.Frame(day_frame, bg="#F8FAFC")
-        items_container.pack(fill=tk.X, padx=10, pady=(2, 4))
-        day_dict["items_container"] = items_container
-
-        if items:
-            for it in items:
-                self.add_activity_task_item(day_dict, text=it)
-        else:
-            self.add_activity_task_item(day_dict, text="")
+        btn_pick.pack(side=tk.LEFT, padx=(4, 0))
 
         btn_add_task = tk.Button(
-            day_frame,
-            text="➕ Add Task Item",
+            top_row,
+            text=t("add_activity_bullet"),
             font=("Segoe UI", 8),
             fg="#0284C7",
             bg="#F0F9FF",
             activebackground="#E0F2FE",
             relief=tk.FLAT,
-            padx=8,
-            pady=2,
-            cursor="hand2",
-            command=lambda: self.add_activity_task_item(day_dict, text="")
+            padx=6,
+            pady=1,
+            cursor="hand2"
         )
-        btn_add_task.pack(anchor="w", padx=10)
+        btn_add_task.pack(side=tk.RIGHT, padx=(4, 0))
+
+        btn_del_day = tk.Button(
+            top_row,
+            text="✕",
+            font=("Segoe UI", 8, "bold"),
+            fg="#94A3B8",
+            bg="#F8FAFC",
+            activeforeground=COLOR_DANGER,
+            relief=tk.FLAT,
+            padx=4,
+            cursor="hand2"
+        )
+        btn_del_day.pack(side=tk.RIGHT)
+
+        tasks_box = tk.Frame(day_card, bg="#F8FAFC")
+        tasks_box.pack(fill=tk.X)
+
+        day_dict: Dict[str, Any] = {
+            "card": day_card,
+            "entry_date": entry_date,
+            "tasks_box": tasks_box,
+            "items": []
+        }
+
+        btn_add_task.configure(command=lambda: self.add_activity_item(day_dict))
+        btn_del_day.configure(command=lambda: self.remove_activity_day_block(day_dict))
 
         self.activity_day_widgets.append(day_dict)
 
+        for text in items:
+            self.add_activity_item(day_dict, text=text)
 
     def remove_activity_day_block(self, day_dict: Dict[str, Any]):
-        if len(self.activity_day_widgets) <= 1:
-            messagebox.showwarning("Warning", "At least one day entry is recommended.", parent=self)
-        day_dict["frame"].destroy()
+        day_dict["card"].destroy()
         if day_dict in self.activity_day_widgets:
             self.activity_day_widgets.remove(day_dict)
 
-    def add_activity_task_item(self, day_dict: Dict[str, Any], text: str = ""):
-        container = day_dict["items_container"]
-        row = tk.Frame(container, bg="#F8FAFC")
+    def add_activity_item(self, day_dict: Dict[str, Any], text: str = ""):
+        row = tk.Frame(day_dict["tasks_box"], bg="#F8FAFC")
         row.pack(fill=tk.X, pady=2)
 
-        tk.Label(row, text="•", font=("Segoe UI", 10, "bold"), fg=COLOR_PRIMARY, bg="#F8FAFC").pack(side=tk.LEFT, padx=(0, 4))
+        tk.Label(row, text="•", font=("Segoe UI", 10, "bold"), fg=COLOR_PRIMARY, bg="#F8FAFC").pack(side=tk.LEFT, padx=(4, 6))
 
         entry = ttk.Entry(row)
         entry.insert(0, text)
@@ -1457,19 +1470,19 @@ class InternReportApp(tk.Tk):
         btn_del = tk.Button(
             row,
             text="✕",
-            font=("Segoe UI", 8, "bold"),
+            font=("Segoe UI", 7, "bold"),
             fg="#94A3B8",
             bg="#F8FAFC",
             activeforeground=COLOR_DANGER,
             relief=tk.FLAT,
             cursor="hand2",
-            command=lambda: self.remove_activity_task_item(day_dict, item_dict)
+            command=lambda: self.remove_activity_item(day_dict, item_dict)
         )
         btn_del.pack(side=tk.RIGHT)
 
         day_dict["items"].append(item_dict)
 
-    def remove_activity_task_item(self, day_dict: Dict[str, Any], item_dict: Dict[str, Any]):
+    def remove_activity_item(self, day_dict: Dict[str, Any], item_dict: Dict[str, Any]):
         item_dict["frame"].destroy()
         if item_dict in day_dict["items"]:
             day_dict["items"].remove(item_dict)
@@ -1478,7 +1491,7 @@ class InternReportApp(tk.Tk):
         row = tk.Frame(self.skills_container, bg=COLOR_SURFACE)
         row.pack(fill=tk.X, pady=2)
 
-        tk.Label(row, text="•", font=("Segoe UI", 10, "bold"), fg=COLOR_PRIMARY, bg=COLOR_SURFACE).pack(side=tk.LEFT, padx=(0, 4))
+        tk.Label(row, text="•", font=("Segoe UI", 10, "bold"), fg=COLOR_PRIMARY, bg=COLOR_SURFACE).pack(side=tk.LEFT, padx=(4, 6))
 
         entry = ttk.Entry(row)
         entry.insert(0, text)
@@ -1510,7 +1523,7 @@ class InternReportApp(tk.Tk):
         row = tk.Frame(self.comments_container, bg=COLOR_SURFACE)
         row.pack(fill=tk.X, pady=2)
 
-        tk.Label(row, text="•", font=("Segoe UI", 10, "bold"), fg=COLOR_PRIMARY, bg=COLOR_SURFACE).pack(side=tk.LEFT, padx=(0, 4))
+        tk.Label(row, text="•", font=("Segoe UI", 10, "bold"), fg=COLOR_PRIMARY, bg=COLOR_SURFACE).pack(side=tk.LEFT, padx=(4, 6))
 
         entry = ttk.Entry(row)
         entry.insert(0, text)
@@ -1538,10 +1551,6 @@ class InternReportApp(tk.Tk):
         if item_dict in self.comment_bullet_widgets:
             self.comment_bullet_widgets.remove(item_dict)
 
-    # ==========================================
-    # ACTIONS: SAVE, GENERATE, COMPILE, VIEW
-    # ==========================================
-
     def save_current_data(self, show_toast: bool = False):
         if not self.current_week_info:
             return
@@ -1550,7 +1559,7 @@ class InternReportApp(tk.Tk):
         week_path = self.current_week_info["path"]
         save_week_data(week_path, data)
         if show_toast:
-            self.set_status(f"Saved changes to {self.current_week_info['name']}")
+            self.set_status(t("status_saved", name=self.current_week_info['name']))
 
     def generate_tex_action(self):
         if not self.current_week_info:
@@ -1559,7 +1568,7 @@ class InternReportApp(tk.Tk):
         week_path = self.current_week_info["path"]
         tex_path = save_latex_file(week_path, self.current_data)
         tex_filename = os.path.basename(tex_path)
-        self.set_status(f"Generated {tex_filename} in {self.current_week_info['name']}")
+        self.set_status(t("status_generated_tex", filename=tex_filename, name=self.current_week_info['name']))
         messagebox.showinfo(
             "LaTeX Generated",
             f"Successfully created {tex_filename} at:\n{tex_path}",
@@ -1581,7 +1590,7 @@ class InternReportApp(tk.Tk):
         save_latex_file(week_path, self.current_data)
 
         self.btn_compile_pdf.configure(state="disabled", text="⏳ Compiling...")
-        self.set_status("Compiling LaTeX to PDF, please wait...")
+        self.set_status(t("status_compiling_pdf"))
 
         def run_compilation():
             clean_aux = self.config.get("auto_clean_aux", True)
@@ -1591,20 +1600,20 @@ class InternReportApp(tk.Tk):
         threading.Thread(target=run_compilation, daemon=True).start()
 
     def on_compilation_finished(self, success: bool, message: str, pdf_path: str):
-        self.btn_compile_pdf.configure(state="normal", text="🚀 Compile PDF")
+        self.btn_compile_pdf.configure(state="normal", text=t("btn_compile_pdf"))
         if success:
-            self.set_status("PDF compiled successfully! ✅")
+            self.set_status(t("status_pdf_success"))
             self.refresh_week_list()
             pdf_name = os.path.basename(pdf_path)
             ans = messagebox.askyesno(
-                "Compilation Successful",
-                f"{pdf_name} was generated successfully!\n\nWould you like to open the PDF now?",
+                t("dialog_pdf_success_title"),
+                t("dialog_pdf_success_msg", pdf_name=pdf_name),
                 parent=self
             )
             if ans and pdf_path:
                 FolderManager.open_file_default(pdf_path)
         else:
-            self.set_status("Compilation failed with errors ❌", is_error=True)
+            self.set_status(t("status_pdf_failed"), is_error=True)
             messagebox.showerror("Compilation Error", message, parent=self)
 
     def view_pdf_action(self):
@@ -1616,8 +1625,8 @@ class InternReportApp(tk.Tk):
         else:
             pdf_name = f"{self.current_week_info['name']}.pdf"
             messagebox.showinfo(
-                "PDF Not Found",
-                f"{pdf_name} has not been compiled yet.\nClick '🚀 Compile PDF' to generate it.",
+                t("dialog_pdf_not_found_title"),
+                t("dialog_pdf_not_found_msg", pdf_name=pdf_name),
                 parent=self
             )
 
@@ -1632,31 +1641,56 @@ class InternReportApp(tk.Tk):
         try:
             rel = os.path.relpath(rep_dir, self.workspace_dir)
             if not rel.startswith(".."):
-                return f"REPORTS ({rel}/)"
+                return f"{t('reports_header')} ({rel}/)"
         except Exception:
             pass
         folder_base = os.path.basename(rep_dir) or rep_dir
-        return f"REPORTS ({folder_base}/)"
+        return f"{t('reports_header')} ({folder_base}/)"
+
+    def retranslate_ui(self):
+        saved_week_path = self.current_week_info["path"] if self.current_week_info else None
+        if self.current_week_info:
+            self.save_current_data(show_toast=False)
+
+        self.title(t("app_title"))
+        for child in self.winfo_children():
+            child.destroy()
+
+        self.build_ui()
+        self.refresh_week_list()
+
+        if saved_week_path:
+            for w in self.folder_manager.list_week_folders():
+                if w["path"] == saved_week_path:
+                    self.select_week(w)
+                    break
 
     def open_settings_dialog(self):
         def on_saved(new_config):
+            old_lang = self.config.get("language", "en")
             self.config = new_config
+            new_lang = self.config.get("language", "en")
+            set_language(new_lang)
+
             self.folder_manager.set_reports_dir(self.config.get("custom_reports_dir", ""))
-            self.lbl_reports_header.configure(text=self.get_reports_header_text())
-            self.update_compiler_badge()
-            self.refresh_week_list()
-            self.set_status("Settings saved. Reports directory updated.")
+            
+            if old_lang != new_lang:
+                self.retranslate_ui()
+            else:
+                self.lbl_reports_header.configure(text=self.get_reports_header_text())
+                self.update_compiler_badge()
+                self.refresh_week_list()
+
+            self.set_status(t("status_settings_saved"))
 
         SettingsDialog(self, self.workspace_dir, self.config, on_save_callback=on_saved)
 
     def open_about_dialog(self):
         AboutDialog(self)
 
-
-
     def show_missing_compiler_dialog(self):
         msg_win = tk.Toplevel(self)
-        msg_win.title("LaTeX Compiler Required")
+        msg_win.title(t("dialog_latex_missing_title"))
         msg_win.geometry("540x330")
         msg_win.resizable(False, False)
         msg_win.transient(self)
@@ -1673,7 +1707,7 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             pad,
-            text="⚠️  pdflatex Compiler Not Found",
+            text=f"⚠️  {t('compiler_not_detected')}",
             font=("Segoe UI", 13, "bold"),
             fg=COLOR_DANGER,
             bg="#FFFFFF"
@@ -1681,7 +1715,7 @@ class InternReportApp(tk.Tk):
 
         tk.Label(
             pad,
-            text="To compile your reports into PDF, you need a LaTeX compiler (such as MiKTeX or TeX Live). You can install one or browse for an existing pdflatex executable:",
+            text=t("compiler_not_detected_desc"),
             font=("Segoe UI", 9),
             fg="#475569",
             bg="#FFFFFF",
@@ -1695,7 +1729,7 @@ class InternReportApp(tk.Tk):
 
         def browse_custom_compiler():
             chosen_file = filedialog.askopenfilename(
-                title="Select pdflatex Executable",
+                title=t("settings_compiler_path"),
                 filetypes=[("Executable Files", "*.exe"), ("All Files", "*.*")],
                 parent=msg_win
             )
@@ -1707,21 +1741,21 @@ class InternReportApp(tk.Tk):
                     self.update_compiler_badge()
                     self.set_status("Custom pdflatex compiler configured! ✅")
                     messagebox.showinfo(
-                        "Compiler Configured",
-                        f"✅ Successfully configured custom pdflatex!\n\nVersion: {diag['version']}\nPath: {chosen_file}",
+                        t("compiler_verified_title"),
+                        t("compiler_verified_msg", version=diag['version'], path=chosen_file),
                         parent=msg_win
                     )
                     msg_win.destroy()
                 else:
                     messagebox.showerror(
-                        "Invalid Compiler",
-                        f"❌ The selected executable is not a working pdflatex compiler:\n{chosen_file}",
+                        t("compiler_failed_title"),
+                        t("compiler_failed_msg", path=chosen_file),
                         parent=msg_win
                     )
 
         tk.Button(
             btn_row1,
-            text="📁 Browse Custom pdflatex.exe...",
+            text=f"📁 {t('settings_browse')}",
             font=("Segoe UI", 9, "bold"),
             fg="#FFFFFF",
             bg="#0F766E",
@@ -1735,7 +1769,7 @@ class InternReportApp(tk.Tk):
 
         tk.Button(
             btn_row1,
-            text="⚙️ Open Full Settings",
+            text=f"⚙️ {t('settings')}",
             font=("Segoe UI", 9),
             fg="#334155",
             bg="#F1F5F9",
@@ -1752,7 +1786,7 @@ class InternReportApp(tk.Tk):
 
         tk.Button(
             btn_row2,
-            text="📥 Download MiKTeX (Recommended)",
+            text="📥 Download MiKTeX",
             font=("Segoe UI", 8, "bold"),
             fg="#FFFFFF",
             bg=COLOR_PRIMARY,
@@ -1778,17 +1812,9 @@ class InternReportApp(tk.Tk):
             command=lambda: webbrowser.open(TEXLIVE_URL)
         ).pack(side=tk.LEFT)
 
-        tk.Label(
-            pad,
-            text="Note: You can still edit and generate the LaTeX files without a compiler.",
-            font=("Segoe UI", 8, "italic"),
-            fg="#64748B",
-            bg="#FFFFFF"
-        ).pack(anchor="w", pady=(0, 10))
-
         tk.Button(
             pad,
-            text="Close",
+            text=t("about_close"),
             font=("Segoe UI", 9),
             fg="#475569",
             bg="#E2E8F0",
@@ -1798,4 +1824,3 @@ class InternReportApp(tk.Tk):
             cursor="hand2",
             command=msg_win.destroy
         ).pack(side=tk.RIGHT)
-

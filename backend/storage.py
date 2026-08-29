@@ -9,8 +9,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "custom_pdflatex_path": "",
     "custom_reports_dir": "",
     "auto_clean_aux": True,
+    "language": "en",
     "theme": "light"
 }
+
 
 
 def get_config_path(base_dir: str) -> str:

@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 import webbrowser
+from backend.i18n import t
 
 class AboutDialog(tk.Toplevel):
     def __init__(self, parent: tk.Tk):
         super().__init__(parent)
-        self.title("About - UMT Intern Report Manager")
+        self.title(t("about_title"))
         self.geometry("460x380")
         self.resizable(False, False)
         self.transient(parent)
@@ -33,7 +34,7 @@ class AboutDialog(tk.Toplevel):
 
         lbl_app = tk.Label(
             header,
-            text="UMT Intern Report Manager",
+            text=t("about_header"),
             font=("Segoe UI", 13, "bold"),
             fg="#F8FAFC",
             bg="#0F172A"
@@ -42,7 +43,7 @@ class AboutDialog(tk.Toplevel):
 
         lbl_sub = tk.Label(
             header,
-            text="Industrial Training e-Logbook Desktop Manager",
+            text=t("about_sub"),
             font=("Segoe UI", 9),
             fg="#94A3B8",
             bg="#0F172A"
@@ -60,19 +61,19 @@ class AboutDialog(tk.Toplevel):
         # Version
         r1 = tk.Frame(card, bg="#FFFFFF")
         r1.pack(fill=tk.X, pady=3)
-        tk.Label(r1, text="Version:", font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
+        tk.Label(r1, text=t("about_version"), font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
         tk.Label(r1, text="v1.0.0 (2026)", font=("Segoe UI", 9), fg="#0F172A", bg="#FFFFFF").pack(side=tk.LEFT)
 
         # Developer
         r2 = tk.Frame(card, bg="#FFFFFF")
         r2.pack(fill=tk.X, pady=3)
-        tk.Label(r2, text="Developer:", font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
+        tk.Label(r2, text=t("about_developer"), font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
         tk.Label(r2, text="LurdK", font=("Segoe UI", 9, "bold"), fg="#0284C7", bg="#FFFFFF").pack(side=tk.LEFT)
 
         # GitHub Profile
         r3 = tk.Frame(card, bg="#FFFFFF")
         r3.pack(fill=tk.X, pady=3)
-        tk.Label(r3, text="GitHub:", font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
+        tk.Label(r3, text=t("about_github"), font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
         lbl_github = tk.Label(
             r3,
             text="github.com/LurdK",
@@ -87,7 +88,7 @@ class AboutDialog(tk.Toplevel):
         # Repository
         r4 = tk.Frame(card, bg="#FFFFFF")
         r4.pack(fill=tk.X, pady=3)
-        tk.Label(r4, text="Repository:", font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
+        tk.Label(r4, text=t("about_repo"), font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
         lbl_repo = tk.Label(
             r4,
             text="UMT-Intern-Report-App-IRP-",
@@ -102,13 +103,13 @@ class AboutDialog(tk.Toplevel):
         # License
         r5 = tk.Frame(card, bg="#FFFFFF")
         r5.pack(fill=tk.X, pady=3)
-        tk.Label(r5, text="License:", font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
-        tk.Label(r5, text="MIT Open Source License", font=("Segoe UI", 9), fg="#64748B", bg="#FFFFFF").pack(side=tk.LEFT)
+        tk.Label(r5, text=t("about_license"), font=("Segoe UI", 9, "bold"), fg="#475569", bg="#FFFFFF", width=14, anchor="w").pack(side=tk.LEFT)
+        tk.Label(r5, text=t("about_license_val"), font=("Segoe UI", 9), fg="#64748B", bg="#FFFFFF").pack(side=tk.LEFT)
 
         # Footer Button
         btn_close = tk.Button(
             body,
-            text="Close",
+            text=t("about_close"),
             font=("Segoe UI", 9, "bold"),
             fg="#FFFFFF",
             bg="#0284C7",
