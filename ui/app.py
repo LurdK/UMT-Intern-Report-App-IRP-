@@ -1191,11 +1191,13 @@ class InternReportApp(tk.Tk):
             "date_to": self.entry_date_to.get().strip(),
             "matric_no": self.entry_matric.get().strip(),
             "course_code": self.entry_course.get().strip(),
+            "student_name": self.config.get("student_name", "").strip(),
             "attendance": [],
             "daily_activities": [],
             "skills_gained": [],
             "problems_comments": []
         }
+
 
         # Attendance extraction
         for item in self.att_day_widgets:

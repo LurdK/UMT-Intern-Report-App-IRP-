@@ -125,6 +125,9 @@ def generate_latex_content(data: Dict[str, Any]) -> str:
     else:
         problems_latex = "        \\item % None recorded"
 
+    student_name = escape_latex(str(data.get("student_name", "")))
+    name_display = f" {student_name}" if student_name else ""
+
     # Full template construction
     latex_template = f"""\\documentclass[11pt,a4paper]{{article}}
 
@@ -241,8 +244,27 @@ def generate_latex_content(data: Dict[str, Any]) -> str:
     \\end{{itemize}}
 \\end{{tcolorbox}}
 
+\\vspace{{2.5em}}
+
+% --- Verification & Signatures ---
+\\noindent
+\\begin{{minipage}}[t]{{0.46\\textwidth}}
+    \\textbf{{Student Signature:}}\\\\[3.5em]
+    \\rule{{\\linewidth}}{{0.6pt}}\\\\[0.4em]
+    \\textbf{{Name:}}{name_display}\\\\[0.3em]
+    \\textbf{{Date:}}
+\\end{{minipage}}%
+\\hfill
+\\begin{{minipage}}[t]{{0.46\\textwidth}}
+    \\textbf{{Industry Supervisor Signature:}}\\\\[3.5em]
+    \\rule{{\\linewidth}}{{0.6pt}}\\\\[0.4em]
+    \\textbf{{Name:}}\\\\[0.3em]
+    \\textbf{{Date:}}
+\\end{{minipage}}
+
 \\end{{document}}
 """
+
     return latex_template
 
 def save_latex_file(week_folder_path: str, data: Dict[str, Any]) -> str:
