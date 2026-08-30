@@ -256,7 +256,7 @@ def generate_latex_content(data: Dict[str, Any]) -> str:
 \\end{{minipage}}%
 \\hfill
 \\begin{{minipage}}[t]{{0.46\\textwidth}}
-    \\textbf{{Industry Supervisor Signature:}}\\\\[3.5em]
+    \\textbf{{Supervisor Signature \\& Stamp:}}\\\\[3.5em]
     \\rule{{\\linewidth}}{{0.6pt}}\\\\[0.4em]
     \\textbf{{Name:}}\\\\[0.3em]
     \\textbf{{Date:}}
